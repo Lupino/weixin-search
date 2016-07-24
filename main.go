@@ -75,8 +75,8 @@ func main() {
 			case "content":
 				realDoc.Content = string(field.Value())
 			case "created_at":
-                v, _ := field.(*document.NumericField).Number()
-                realDoc.CreatedAt = int64(v)
+				v, _ := field.(*document.NumericField).Number()
+				realDoc.CreatedAt = int64(v)
 			}
 		}
 		sendJSONResponse(w, http.StatusOK, "", realDoc)
