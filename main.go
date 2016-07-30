@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/document"
@@ -70,13 +71,21 @@ func main() {
 			switch field.Name() {
 			case "title":
 				realDoc.Title = string(field.Value())
+				break
 			case "summary":
 				realDoc.Summary = string(field.Value())
+				break
 			case "content":
 				realDoc.Content = string(field.Value())
+				break
+			case "tags":
+				var payload = field.Value()
+				json.Unmarshal(payload, &realDoc.Tags)
+				break
 			case "created_at":
 				v, _ := field.(*document.NumericField).Number()
 				realDoc.CreatedAt = int64(v)
+				break
 			}
 		}
 		sendJSONResponse(w, http.StatusOK, "", realDoc)

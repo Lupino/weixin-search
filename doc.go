@@ -7,12 +7,12 @@ import (
 
 // Document defined common document
 type Document struct {
-	ID        string `json:"id"`
-	Title     string `json:"title,omitempty"`
-	Summary   string `json:"summary,omitempty"`
-	Content   string `json:"content,omitempty"`
-	Tags      string `json:"tags,omitempty"`
-	CreatedAt int64  `json:"created_at,omitempty"`
+	ID        string   `json:"id"`
+	Title     string   `json:"title,omitempty"`
+	Summary   string   `json:"summary,omitempty"`
+	Content   string   `json:"content,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+	CreatedAt int64    `json:"created_at,omitempty"`
 }
 
 // FieldMap defined the interface for binding form
