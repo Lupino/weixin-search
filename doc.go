@@ -12,6 +12,7 @@ type Document struct {
 	Summary   string   `json:"summary,omitempty"`
 	Content   string   `json:"content,omitempty"`
 	Tags      []string `json:"tags,omitempty"`
+	Timelines []string `json:"timelines,omitempty"`
 	CreatedAt int64    `json:"created_at,omitempty"`
 }
 
@@ -23,6 +24,7 @@ func (doc *Document) FieldMap(_ *http.Request) binding.FieldMap {
 		&doc.Summary:   binding.Field{Form: "summary", Required: false},
 		&doc.Content:   binding.Field{Form: "content", Required: false},
 		&doc.Tags:      binding.Field{Form: "tags", Required: false},
+		&doc.Timelines: binding.Field{Form: "timelines", Required: false},
 		&doc.CreatedAt: binding.Field{Form: "created_at", Required: false},
 	}
 }

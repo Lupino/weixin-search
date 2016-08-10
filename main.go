@@ -82,6 +82,10 @@ func main() {
 				var payload = field.Value()
 				json.Unmarshal(payload, &realDoc.Tags)
 				break
+			case "timelines":
+				var payload = field.Value()
+				json.Unmarshal(payload, &realDoc.Timelines)
+				break
 			case "created_at":
 				v, _ := field.(*document.NumericField).Number()
 				realDoc.CreatedAt = int64(v)
