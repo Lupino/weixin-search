@@ -6,6 +6,7 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/custom_analyzer"
 	"github.com/blevesearch/bleve/analysis/char_filters/html_char_filter"
+	"github.com/blevesearch/bleve/index/store/goleveldb"
 )
 
 var dicts = flag.String("dicts", "dict.txt", "dictionary file paths.")
@@ -21,7 +22,7 @@ func createMapping() *bleve.IndexMapping {
 func openIndex(path string) (index bleve.Index, err error) {
 	if index, err = bleve.Open(path); err != nil {
 		mapping := createMapping()
-		if index, err = bleve.New(path, mapping); err != nil {
+		if index, err = bleve.NewUsing(path, mapping, bleve.Config.DefaultIndexType, goleveldb.Name, nil); err != nil {
 			return
 		}
 	}
