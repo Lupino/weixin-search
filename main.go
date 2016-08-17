@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/Lupino/go-periodic"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/document"
 	"github.com/codegangsta/negroni"
@@ -25,20 +26,30 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 }
 
 var (
-	root string
-	host string
+	root         string
+	host         string
+	periodicAddr string
+	docIndex     bleve.Index
+	pclient      = periodic.NewClient()
+	pworker      = periodic.NewWorker(2)
 )
 
 func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The patent search server host.")
 	flag.StringVar(&root, "work_dir", ".", "The patent work dir.")
+	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
 	flag.Parse()
 }
 
 func main() {
+	pclient.Connect(periodicAddr)
+	pworker.Connect(periodicAddr)
+	pworker.AddFunc(funcName, indexDocHandle)
+	go pworker.Work()
+
 	var router = mux.NewRouter()
 	var path = root + "/patent-search.db"
-	var docIndex, _ = openIndex(path)
+	docIndex, _ = openIndex(path)
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
 		doc := new(Document)
@@ -46,7 +57,7 @@ func main() {
 		if errs.Handle(w) {
 			return
 		}
-		if err := docIndex.Index(doc.ID, doc); err != nil {
+		if err := submitDoc(*doc); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
