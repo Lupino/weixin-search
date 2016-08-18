@@ -45,11 +45,12 @@ func main() {
 	pclient.Connect(periodicAddr)
 	pworker.Connect(periodicAddr)
 	pworker.AddFunc(funcName, indexDocHandle)
-	go pworker.Work()
 
 	var router = mux.NewRouter()
 	var path = root + "/patent-search.db"
 	docIndex, _ = openIndex(path)
+
+	go pworker.Work()
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
 		doc := new(Document)

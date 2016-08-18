@@ -19,8 +19,11 @@ func indexDocHandle(job periodic.Job) {
 	var doc Document
 	if err := json.Unmarshal([]byte(job.Args), &doc); err != nil {
 		job.Done()
+		return
 	}
 	if err := docIndex.Index(doc.ID, doc); err != nil {
 		job.Fail()
+		return
 	}
+	job.Done()
 }
