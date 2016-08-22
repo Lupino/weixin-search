@@ -2,14 +2,13 @@ package main
 
 import (
 	"flag"
-	sego "github.com/Lupino/sego-tokenizer"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/custom_analyzer"
 	"github.com/blevesearch/bleve/analysis/char_filters/html_char_filter"
 	"github.com/blevesearch/bleve/index/store/goleveldb"
 )
 
-var dicts = flag.String("dicts", "dict.txt", "dictionary file paths.")
+var tokenizerHost = flag.String("tokenizer", "localhost:3000", "tokenizer server host.")
 
 func createMapping() *bleve.IndexMapping {
 	mapping, err := newIndexMapping()
@@ -38,8 +37,8 @@ func newIndexMapping() (*bleve.IndexMapping, error) {
 
 	if err = mapping.AddCustomTokenizer("sego",
 		map[string]interface{}{
-			"files": *dicts,
-			"type":  sego.Name,
+			"host": *tokenizerHost,
+			"type": Name,
 		},
 	); err != nil {
 		return nil, err
@@ -63,6 +62,6 @@ func newIndexMapping() (*bleve.IndexMapping, error) {
 		return nil, err
 	}
 
-	mapping.DefaultAnalyzer = sego.Name
+	mapping.DefaultAnalyzer = Name
 	return mapping, nil
 }
