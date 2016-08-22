@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/Lupino/tokenizer"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/custom_analyzer"
 	"github.com/blevesearch/bleve/analysis/char_filters/html_char_filter"
@@ -38,7 +39,7 @@ func newIndexMapping() (*bleve.IndexMapping, error) {
 	if err = mapping.AddCustomTokenizer("sego",
 		map[string]interface{}{
 			"host": *tokenizerHost,
-			"type": Name,
+			"type": tokenizer.Name,
 		},
 	); err != nil {
 		return nil, err
@@ -62,6 +63,6 @@ func newIndexMapping() (*bleve.IndexMapping, error) {
 		return nil, err
 	}
 
-	mapping.DefaultAnalyzer = Name
+	mapping.DefaultAnalyzer = tokenizer.Name
 	return mapping, nil
 }

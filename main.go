@@ -148,6 +148,7 @@ func main() {
 		if err != nil {
 			query = bleve.NewQueryStringQuery(q)
 		}
+
 		searchRequest := bleve.NewSearchRequestOptions(query, size, from, false)
 		searchResult, err := docIndex.Search(searchRequest)
 		if err != nil {
