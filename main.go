@@ -24,7 +24,7 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 }
 
 var (
-	root         string
+	path         string
 	host         string
 	periodicAddr string
 	docIndex     bleve.Index
@@ -34,7 +34,7 @@ var (
 
 func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
-	flag.StringVar(&root, "work_dir", ".", "The search work dir.")
+	flag.StringVar(&path, "db", "simple-search.db", "The database path.")
 	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
 	flag.Parse()
 }
@@ -45,7 +45,6 @@ func main() {
 	pworker.AddFunc(funcName, indexDocHandle)
 
 	var router = mux.NewRouter()
-	var path = root + "/patent-search.db"
 	docIndex, _ = openIndex(path)
 
 	go pworker.Work()
