@@ -35,8 +35,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&host, "host", "localhost:3030", "The patent search server host.")
-	flag.StringVar(&root, "work_dir", ".", "The patent work dir.")
+	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
+	flag.StringVar(&root, "work_dir", ".", "The search work dir.")
 	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
 	flag.Parse()
 }
@@ -84,19 +84,12 @@ func main() {
 			case "title":
 				realDoc.Title = string(field.Value())
 				break
-			case "summary":
-				realDoc.Summary = string(field.Value())
-				break
 			case "content":
 				realDoc.Content = string(field.Value())
 				break
 			case "tags":
 				var payload = field.Value()
 				json.Unmarshal(payload, &realDoc.Tags)
-				break
-			case "timelines":
-				var payload = field.Value()
-				json.Unmarshal(payload, &realDoc.Timelines)
 				break
 			case "created_at":
 				v, _ := field.(*document.NumericField).Number()
@@ -125,7 +118,6 @@ func main() {
 			size  int
 			total uint64
 			q     = qs.Get("q")
-			docs  []ResultID
 		)
 		if from, err = strconv.Atoi(qs.Get("from")); err != nil {
 			from = 0
@@ -150,6 +142,8 @@ func main() {
 		}
 
 		searchRequest := bleve.NewSearchRequestOptions(query, size, from, false)
+		searchRequest.Highlight = bleve.NewHighlightWithStyle("html")
+		searchRequest.Highlight.AddField("content")
 		searchResult, err := docIndex.Search(searchRequest)
 		if err != nil {
 			log.Printf("bleve.Index.Search() failed(%s)", err)
@@ -157,8 +151,13 @@ func main() {
 			return
 		}
 
-		for _, hit := range searchResult.Hits {
-			docs = append(docs, ResultID{ID: hit.ID, Score: hit.Score})
+		var hits = make([]hitResult, len(searchResult.Hits))
+		for i, hit := range searchResult.Hits {
+			hits[i] = hitResult{
+				ID:        hit.ID,
+				Fragments: hit.Fragments,
+				Score:     hit.Score,
+			}
 		}
 
 		total = searchResult.Total
@@ -168,7 +167,7 @@ func main() {
 			"from":  from,
 			"size":  size,
 			"q":     q,
-			"docs":  docs,
+			"hits":  hits,
 		})
 	}).Methods("GET")
 

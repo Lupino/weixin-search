@@ -9,10 +9,8 @@ import (
 type Document struct {
 	ID        string   `json:"id"`
 	Title     string   `json:"title,omitempty"`
-	Summary   string   `json:"summary,omitempty"`
 	Content   string   `json:"content,omitempty"`
 	Tags      []string `json:"tags,omitempty"`
-	Timelines []string `json:"timelines,omitempty"`
 	CreatedAt int64    `json:"created_at,omitempty"`
 }
 
@@ -21,16 +19,14 @@ func (doc *Document) FieldMap(_ *http.Request) binding.FieldMap {
 	return binding.FieldMap{
 		&doc.ID:        binding.Field{Form: "id", Required: true},
 		&doc.Title:     binding.Field{Form: "title", Required: true},
-		&doc.Summary:   binding.Field{Form: "summary", Required: false},
 		&doc.Content:   binding.Field{Form: "content", Required: false},
 		&doc.Tags:      binding.Field{Form: "tags", Required: false},
-		&doc.Timelines: binding.Field{Form: "timelines", Required: false},
 		&doc.CreatedAt: binding.Field{Form: "created_at", Required: false},
 	}
 }
 
-// ResultID defined result document id
-type ResultID struct {
-	ID    string  `json:"id"`
-	Score float64 `json:"score"`
+type hitResult struct {
+	ID        string              `json:"id"`
+	Fragments map[string][]string `json:"fragments"`
+	Score     float64             `json:"score"`
 }
