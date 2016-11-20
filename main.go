@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/document"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
@@ -68,7 +66,7 @@ func main() {
 	router.HandleFunc("/api/docs/{id}", func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		id := vars["id"]
-		var doc, err = docIndex.Document(id)
+		var doc, err = getDocument(id)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -77,27 +75,7 @@ func main() {
 			sendJSONResponse(w, http.StatusNotFound, "err", "doc["+id+"] not exists.")
 			return
 		}
-		var realDoc Document
-		realDoc.ID = doc.ID
-		for _, field := range doc.Fields {
-			switch field.Name() {
-			case "title":
-				realDoc.Title = string(field.Value())
-				break
-			case "content":
-				realDoc.Content = string(field.Value())
-				break
-			case "tags":
-				var payload = field.Value()
-				json.Unmarshal(payload, &realDoc.Tags)
-				break
-			case "created_at":
-				v, _ := field.(*document.NumericField).Number()
-				realDoc.CreatedAt = int64(v)
-				break
-			}
-		}
-		sendJSONResponse(w, http.StatusOK, "", realDoc)
+		sendJSONResponse(w, http.StatusOK, "", doc)
 	}).Methods("GET")
 
 	router.HandleFunc("/api/docs/{id}", func(w http.ResponseWriter, req *http.Request) {
@@ -153,10 +131,12 @@ func main() {
 
 		var hits = make([]hitResult, len(searchResult.Hits))
 		for i, hit := range searchResult.Hits {
+			var doc, _ = getDocument(hit.ID)
 			hits[i] = hitResult{
 				ID:        hit.ID,
 				Fragments: hit.Fragments,
 				Score:     hit.Score,
+				Result:    doc,
 			}
 		}
 

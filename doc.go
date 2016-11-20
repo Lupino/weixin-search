@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"github.com/blevesearch/bleve/document"
 	"github.com/mholt/binding"
 	"net/http"
 )
@@ -29,4 +31,37 @@ type hitResult struct {
 	ID        string              `json:"uri"`
 	Fragments map[string][]string `json:"fragments"`
 	Score     float64             `json:"score"`
+	Result    *Document           `json:"doc"`
+}
+
+func getDocument(id string) (*Document, error) {
+	var doc, err = docIndex.Document(id)
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		return nil, nil
+	}
+
+	var realDoc = new(Document)
+	realDoc.ID = doc.ID
+	for _, field := range doc.Fields {
+		switch field.Name() {
+		case "title":
+			realDoc.Title = string(field.Value())
+			break
+		case "content":
+			realDoc.Content = string(field.Value())
+			break
+		case "tags":
+			var payload = field.Value()
+			json.Unmarshal(payload, &realDoc.Tags)
+			break
+		case "created_at":
+			v, _ := field.(*document.NumericField).Number()
+			realDoc.CreatedAt = int64(v)
+			break
+		}
+	}
+	return realDoc, nil
 }
