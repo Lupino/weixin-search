@@ -42,7 +42,7 @@ func init() {
 func main() {
 	pclient.Connect(periodicAddr)
 	pworker.Connect(periodicAddr)
-	pworker.AddFunc(funcName, indexDocHandle)
+	pworker.AddFunc(*funcName, indexDocHandle)
 
 	var router = mux.NewRouter()
 	docIndex, _ = openIndex(path)

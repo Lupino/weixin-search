@@ -2,16 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"github.com/Lupino/go-periodic"
 )
 
 var (
-	funcName = "patent-search-index"
+	funcName = flag.String("funcname", "search-index", "search index funcname.")
 )
 
 func submitDoc(doc Document) error {
 	var data, _ = json.Marshal(doc)
-	return pclient.SubmitJob(funcName, doc.ID,
+	return pclient.SubmitJob(*funcName, doc.ID,
 		map[string]string{"args": string(data)})
 }
 
