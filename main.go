@@ -62,25 +62,25 @@ func main() {
 		sendJSONResponse(w, http.StatusOK, "result", "OK")
 	}).Methods("POST")
 
-	router.HandleFunc("/api/docs/{id}", func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
-		id := vars["id"]
-		var doc, err = getDocument(id)
+	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
+		var qs = req.URL.Query()
+		uri := qs.Get("uri")
+		var doc, err = getDocument(uri)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		if doc == nil {
-			sendJSONResponse(w, http.StatusNotFound, "err", "doc["+id+"] not exists.")
+			sendJSONResponse(w, http.StatusNotFound, "err", "doc["+uri+"] not exists.")
 			return
 		}
 		sendJSONResponse(w, http.StatusOK, "", doc)
 	}).Methods("GET")
 
-	router.HandleFunc("/api/docs/{id}", func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
-		id := vars["id"]
-		if err := docIndex.Delete(id); err != nil {
+	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
+		var qs = req.URL.Query()
+		uri := qs.Get("uri")
+		if err := docIndex.Delete(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
