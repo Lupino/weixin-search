@@ -121,6 +121,8 @@ func main() {
 		searchRequest := bleve.NewSearchRequestOptions(query, size, from, false)
 		searchRequest.Highlight = bleve.NewHighlightWithStyle("html")
 		searchRequest.Highlight.AddField("content")
+		searchRequest.Highlight.AddField("title")
+		searchRequest.Highlight.AddField("tags")
 		searchResult, err := docIndex.Search(searchRequest)
 		if err != nil {
 			log.Printf("bleve.Index.Search() failed(%s)", err)
@@ -130,12 +132,10 @@ func main() {
 
 		var hits = make([]hitResult, len(searchResult.Hits))
 		for i, hit := range searchResult.Hits {
-			var doc, _ = getDocument(hit.ID)
 			hits[i] = hitResult{
 				ID:        hit.ID,
 				Fragments: hit.Fragments,
 				Score:     hit.Score,
-				Result:    doc,
 			}
 		}
 

@@ -31,7 +31,6 @@ type hitResult struct {
 	ID        string              `json:"uri"`
 	Fragments map[string][]string `json:"fragments"`
 	Score     float64             `json:"score"`
-	Result    *Document           `json:"doc"`
 }
 
 func getDocument(id string) (*Document, error) {
