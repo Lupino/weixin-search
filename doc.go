@@ -5,6 +5,7 @@ import (
 	"github.com/blevesearch/bleve/document"
 	"github.com/mholt/binding"
 	"net/http"
+	"unicode/utf8"
 )
 
 // Document defined common document
@@ -63,4 +64,35 @@ func getDocument(id string) (*Document, error) {
 		}
 	}
 	return realDoc, nil
+}
+
+func filterUtf8(old string) string {
+	n := old[:]
+	for !utf8.ValidString(n) {
+		if len(n) <= 0 {
+			break
+		}
+		n = n[:len(n)-1]
+	}
+	if len(n) < len(old) {
+		n = n + "…"
+	}
+
+	return n
+}
+
+func filterFragment(in []string) []string {
+	out := make([]string, len(in))
+	for i, f := range in {
+		out[i] = filterUtf8(f)
+	}
+	return out
+}
+
+func filterFragments(in map[string][]string) map[string][]string {
+	out := make(map[string][]string)
+	for k, v := range in {
+		out[k] = filterFragment(v)
+	}
+	return out
 }

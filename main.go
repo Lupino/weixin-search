@@ -134,7 +134,7 @@ func main() {
 		for i, hit := range searchResult.Hits {
 			hits[i] = hitResult{
 				ID:        hit.ID,
-				Fragments: hit.Fragments,
+				Fragments: filterFragments(hit.Fragments),
 				Score:     hit.Score,
 			}
 		}
