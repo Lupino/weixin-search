@@ -3,7 +3,12 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/Lupino/go-periodic"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
 var (
@@ -22,6 +27,52 @@ func indexDocHandle(job periodic.Job) {
 		job.Done()
 		return
 	}
+	if err := docIndex.Index(doc.ID, doc); err != nil {
+		job.Fail()
+		return
+	}
+	job.Done()
+}
+
+func submitHotLink(link string) error {
+	return pclient.SubmitJob("hot-"+*funcName, link, nil)
+}
+
+func indexHotHandle(job periodic.Job) {
+	var (
+		form = url.Values{}
+		url  string
+		req  *http.Request
+		rsp  *http.Response
+		err  error
+		doc  Document
+	)
+
+	form.Add("data", job.Name)
+	url = fmt.Sprintf("http://%s/api/extract/", extractHost)
+
+	req, _ = http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		log.Printf("http.DefaultClient.Do() failed (%s)\n", err)
+		job.Done()
+		return
+	}
+	defer rsp.Body.Close()
+
+	if int(rsp.StatusCode/100) != 2 {
+		job.Done()
+		return
+	}
+
+	decoder := json.NewDecoder(rsp.Body)
+	if err = decoder.Decode(&doc); err != nil {
+		log.Printf("json.NewDecoder().Decode() failed (%s)", err)
+		job.Done()
+		return
+	}
+
 	if err := docIndex.Index(doc.ID, doc); err != nil {
 		job.Fail()
 		return

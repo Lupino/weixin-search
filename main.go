@@ -11,6 +11,8 @@ import (
 	"github.com/unrolled/render"
 	"log"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
 )
 
@@ -27,7 +29,9 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 var (
 	path         string
 	host         string
+	verifyRegexp string
 	periodicAddr string
+	extractHost  string
 	docIndex     bleve.Index
 	pclient      = periodic.NewClient()
 	pworker      = periodic.NewWorker(2)
@@ -37,13 +41,32 @@ func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
 	flag.StringVar(&path, "db", "simple-search.db", "The database path.")
 	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
+	flag.StringVar(&verifyRegexp, "regexp", ".*", "The valid host regexp.")
+	flag.StringVar(&extractHost, "extract", "localhost:3031", "The content extract host.")
 	flag.Parse()
+}
+
+func isValidHost(link string) bool {
+	var (
+		err     error
+		u       *url.URL
+		matched bool
+	)
+
+	if u, err = url.Parse(link); err != nil {
+		return false
+	}
+	if matched, err = regexp.MatchString(verifyRegexp, u.Host); err != nil {
+		return false
+	}
+	return matched
 }
 
 func main() {
 	pclient.Connect(periodicAddr)
 	pworker.Connect(periodicAddr)
 	pworker.AddFunc(*funcName, indexDocHandle)
+	pworker.AddFunc("hot-"+*funcName, indexHotHandle)
 
 	var router = mux.NewRouter()
 	docIndex, _ = openIndex(path)
@@ -62,6 +85,25 @@ func main() {
 		}
 		sendJSONResponse(w, http.StatusOK, "result", "OK")
 	}).Methods("POST")
+
+    // auto index on simple crawl
+	router.HandleFunc("/api/docs/hot/", func(w http.ResponseWriter, req *http.Request) {
+		var qs = req.URL.Query()
+		uri := qs.Get("uri")
+		if isValidHost(uri) {
+			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
+			return
+		}
+		if hasDocument(uri) {
+			sendJSONResponse(w, http.StatusOK, "result", "OK")
+			return
+		}
+		if err := submitHotLink(uri); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		sendJSONResponse(w, http.StatusOK, "result", "OK")
+	}).Methods("GET")
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
 		var qs = req.URL.Query()

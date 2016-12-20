@@ -34,6 +34,17 @@ type hitResult struct {
 	Score     float64             `json:"score"`
 }
 
+func hasDocument(id string) bool {
+	var doc, err = docIndex.Document(id)
+	if err != nil {
+		return false
+	}
+	if doc == nil {
+		return false
+	}
+	return true
+}
+
 func getDocument(id string) (*Document, error) {
 	var doc, err = docIndex.Document(id)
 	if err != nil {
