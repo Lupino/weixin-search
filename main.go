@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 )
 
@@ -29,7 +28,7 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 var (
 	path         string
 	host         string
-	verifyRegexp string
+	domain       string
 	periodicAddr string
 	extractHost  string
 	docIndex     bleve.Index
@@ -41,7 +40,7 @@ func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
 	flag.StringVar(&path, "db", "simple-search.db", "The database path.")
 	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
-	flag.StringVar(&verifyRegexp, "regexp", ".*", "The valid host regexp.")
+	flag.StringVar(&domain, "domain", "example.com", "The target domain name.")
 	flag.StringVar(&extractHost, "extract", "localhost:3031", "The content extract host.")
 	flag.Parse()
 }
@@ -50,16 +49,12 @@ func isValidHost(link string) (string, bool) {
 	var (
 		err     error
 		u       *url.URL
-		matched bool
 	)
 
 	if u, err = url.Parse(link); err != nil {
 		return "", false
 	}
-	if matched, err = regexp.MatchString(verifyRegexp, u.Host); err != nil {
-		return "", false
-	}
-	return u.String(), matched
+	return u.String(), u.Host == domain
 }
 
 func main() {
