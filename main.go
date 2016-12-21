@@ -46,7 +46,7 @@ func init() {
 	flag.Parse()
 }
 
-func isValidHost(link string) bool {
+func isValidHost(link string) (string, bool) {
 	var (
 		err     error
 		u       *url.URL
@@ -54,12 +54,12 @@ func isValidHost(link string) bool {
 	)
 
 	if u, err = url.Parse(link); err != nil {
-		return false
+		return "", false
 	}
 	if matched, err = regexp.MatchString(verifyRegexp, u.Host); err != nil {
-		return false
+		return "", false
 	}
-	return matched
+	return u.String(), matched
 }
 
 func main() {
@@ -90,7 +90,8 @@ func main() {
 	router.HandleFunc("/api/docs/hot/", func(w http.ResponseWriter, req *http.Request) {
 		var qs = req.URL.Query()
 		uri := qs.Get("uri")
-		if isValidHost(uri) {
+		var ok bool
+		if uri, ok = isValidHost(uri); !ok {
 			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
 			return
 		}
