@@ -41,17 +41,17 @@ func submitHotLink(link string) error {
 func indexHotHandle(job periodic.Job) {
 	var (
 		form = url.Values{}
-		url  string
+		uri  string
 		req  *http.Request
 		rsp  *http.Response
 		err  error
 		doc  Document
 	)
 
-	form.Add("data", job.Name)
-	url = fmt.Sprintf("http://%s/api/extract/", extractHost)
+	form.Add("uri", job.Name)
+	uri = fmt.Sprintf("http://%s/api/extract/", extractHost)
 
-	req, _ = http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+	req, _ = http.NewRequest("POST", uri, strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	if rsp, err = http.DefaultClient.Do(req); err != nil {
