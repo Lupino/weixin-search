@@ -86,7 +86,7 @@ func main() {
 		sendJSONResponse(w, http.StatusOK, "result", "OK")
 	}).Methods("POST")
 
-    // auto index on simple crawl
+	// auto index on simple crawl
 	router.HandleFunc("/api/docs/hot/", func(w http.ResponseWriter, req *http.Request) {
 		var qs = req.URL.Query()
 		uri := qs.Get("uri")
