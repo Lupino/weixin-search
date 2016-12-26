@@ -47,8 +47,8 @@ func init() {
 
 func isValidHost(link string) (string, bool) {
 	var (
-		err     error
-		u       *url.URL
+		err error
+		u   *url.URL
 	)
 
 	if u, err = url.Parse(link); err != nil {
@@ -115,6 +115,15 @@ func main() {
 		}
 		sendJSONResponse(w, http.StatusOK, "", doc)
 	}).Methods("GET")
+
+	router.HandleFunc("/api/docs/count", func(w http.ResponseWriter, req *http.Request) {
+		var docCount, err = docIndex.DocCount()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		sendJSONResponse(w, http.StatusOK, "", docCount)
+	})
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
 		var qs = req.URL.Query()
