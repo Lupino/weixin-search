@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/Lupino/go-periodic"
+	"github.com/PuerkitoBio/purell"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/codegangsta/negroni"
@@ -15,16 +16,6 @@ import (
 	"strconv"
 )
 
-var r = render.New()
-
-func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
-	if key == "" {
-		r.JSON(w, status, data)
-	} else {
-		r.JSON(w, status, map[string]interface{}{key: data})
-	}
-}
-
 var (
 	path         string
 	host         string
@@ -34,7 +25,21 @@ var (
 	docIndex     bleve.Index
 	pclient      = periodic.NewClient()
 	pworker      = periodic.NewWorker(2)
+	r            = render.New()
+	flags        = purell.FlagsUsuallySafeGreedy |
+		purell.FlagRemoveFragment |
+		purell.FlagRemoveDuplicateSlashes |
+		purell.FlagSortQuery |
+		purell.FlagRemoveEmptyPortSeparator
 )
+
+func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
+	if key == "" {
+		r.JSON(w, status, data)
+	} else {
+		r.JSON(w, status, map[string]interface{}{key: data})
+	}
+}
 
 func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
@@ -54,7 +59,8 @@ func isValidHost(link string) (string, bool) {
 	if u, err = url.Parse(link); err != nil {
 		return "", false
 	}
-	return u.String(), u.Host == domain
+	normalized := purell.NormalizeURL(u, flags)
+	return normalized, u.Host == domain
 }
 
 func main() {
@@ -83,9 +89,12 @@ func main() {
 
 	// auto index on simple crawl
 	router.HandleFunc("/api/docs/hot/", func(w http.ResponseWriter, req *http.Request) {
-		var qs = req.URL.Query()
-		uri := qs.Get("uri")
-		var ok bool
+		var (
+			qs  = req.URL.Query()
+			uri = qs.Get("uri")
+			ok  bool
+			err error
+		)
 		if uri, ok = isValidHost(uri); !ok {
 			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
 			return
@@ -94,7 +103,7 @@ func main() {
 			sendJSONResponse(w, http.StatusOK, "result", "OK")
 			return
 		}
-		if err := submitHotLink(uri); err != nil {
+		if err = submitHotLink(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -102,10 +111,18 @@ func main() {
 	}).Methods("GET")
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
-		var qs = req.URL.Query()
-		uri := qs.Get("uri")
-		var doc, err = getDocument(uri)
-		if err != nil {
+		var (
+			qs  = req.URL.Query()
+			uri = qs.Get("uri")
+			ok  bool
+			err error
+			doc *Document
+		)
+		if uri, ok = isValidHost(uri); !ok {
+			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
+			return
+		}
+		if doc, err = getDocument(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -126,9 +143,17 @@ func main() {
 	})
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
-		var qs = req.URL.Query()
-		uri := qs.Get("uri")
-		if err := docIndex.Delete(uri); err != nil {
+		var (
+			qs  = req.URL.Query()
+			uri = qs.Get("uri")
+			ok  bool
+			err error
+		)
+		if uri, ok = isValidHost(uri); !ok {
+			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
+			return
+		}
+		if err = docIndex.Delete(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
