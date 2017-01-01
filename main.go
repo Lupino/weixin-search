@@ -210,7 +210,6 @@ func main() {
 			"total": total,
 			"from":  from,
 			"size":  size,
-			"q":     q,
 			"hits":  hits,
 		})
 	}).Methods("GET")
