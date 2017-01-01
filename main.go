@@ -118,10 +118,6 @@ func main() {
 			err error
 			doc *Document
 		)
-		if uri, ok = isValidHost(uri); !ok {
-			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
-			return
-		}
 		if doc, err = getDocument(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -149,10 +145,6 @@ func main() {
 			ok  bool
 			err error
 		)
-		if uri, ok = isValidHost(uri); !ok {
-			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
-			return
-		}
 		if err = docIndex.Delete(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
