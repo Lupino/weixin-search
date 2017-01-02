@@ -114,7 +114,6 @@ func main() {
 		var (
 			qs  = req.URL.Query()
 			uri = qs.Get("uri")
-			ok  bool
 			err error
 			doc *Document
 		)
@@ -142,7 +141,6 @@ func main() {
 		var (
 			qs  = req.URL.Query()
 			uri = qs.Get("uri")
-			ok  bool
 			err error
 		)
 		if err = docIndex.Delete(uri); err != nil {
