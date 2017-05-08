@@ -29,21 +29,21 @@ func crawlLinkHandle(job periodic.Job) {
 	)
 
 	if meta, err = doCrawl(job.Name); err != nil {
-		fmt.Printf("doCrawl() failed (%s)", err)
+		fmt.Printf("doCrawl() failed (%s)\n", err)
 		return
 	}
 	if art, err = createArticle(meta); err != nil {
-		fmt.Printf("createArticle() failed (%s)", err)
+		fmt.Printf("createArticle() failed (%s)\n", err)
 		retryJob(job)
 		return
 	}
 	if err = createTimeline(meta["biz"], art); err != nil {
-		fmt.Printf("createTimeline() failed (%s)", err)
+		fmt.Printf("createTimeline() failed (%s)\n", err)
 		retryJob(job)
 		return
 	}
 	if err = updateCover(art, meta["cover"]); err != nil {
-		fmt.Printf("updateCover() failed (%s)", err)
+		fmt.Printf("updateCover() failed (%s)\n", err)
 	}
 	meta["id"] = strconv.Itoa(art.ID)
 	doc = metaDoc(meta)
