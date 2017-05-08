@@ -261,7 +261,7 @@ func updateCover(art Article, fileId string) (err error) {
 		return
 	}
 	if rsp.StatusCode != 200 {
-		err = errors.New("Create timeline failed.")
+		err = errors.New("Update cover failed.")
 		return
 	}
 	defer rsp.Body.Close()

@@ -44,8 +44,6 @@ func crawlLinkHandle(job periodic.Job) {
 	}
 	if err = updateCover(art, meta["cover"]); err != nil {
 		fmt.Printf("updateCover() failed (%s)", err)
-		retryJob(job)
-		return
 	}
 	meta["id"] = strconv.Itoa(art.ID)
 	doc = metaDoc(meta)
