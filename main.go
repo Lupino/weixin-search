@@ -23,6 +23,9 @@ var (
 	pclient       = periodic.NewClient()
 	pworker       = periodic.NewWorker(2)
 	r             = render.New()
+	articleKey    string
+	articleSecret string
+	articleHost   string
 )
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -38,6 +41,9 @@ func init() {
 	flag.StringVar(&path, "db", "simple-search.db", "The database path.")
 	flag.StringVar(&periodicHost, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
 	flag.StringVar(&name, "name", "weixin-search", "The search server name.")
+	flag.StringVar(&articleKey, "article-key", "", "The article service key.")
+	flag.StringVar(&articleSecret, "article-secret", "", "The article service secret.")
+	flag.StringVar(&articleHost, "article-host", "https://gw.huabot.com", "The article service host.")
 	flag.Parse()
 }
 
