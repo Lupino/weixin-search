@@ -27,11 +27,15 @@ func extractData(data string) string {
 
 func doCrawl(uri string) (meta map[string]string, err error) {
 	var (
-		doc    *goquery.Document
-		reMeta = regexp.MustCompile("var (biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
-		text   string
-		match  []string
-		html   string
+		doc        *goquery.Document
+		reMeta     = regexp.MustCompile("var (biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
+		text       string
+		match      []string
+		html       string
+		cover      string
+		ok         bool
+		firstImage File
+		file       File
 	)
 	meta = make(map[string]string)
 
@@ -49,30 +53,26 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 		}
 	})
 
-	if cover, ok := meta["msg_cdn_url"]; ok {
-		if file, err := uploadImage(cover, "jpg"); err == nil {
-			meta["msg_cdn_url"] = fileUrl(file)
-			meta["cover"] = strconv.Itoa(file.ID)
-		}
-	}
-
 	contentElement := doc.Find("#js_content")
 
 	contentElement.Find("img").Each(func(i int, s *goquery.Selection) {
 		var (
 			imgUrl string
-			ok     bool
-			file   File
 			tp     string
 		)
 
 		if imgUrl, ok = s.Attr("data-src"); !ok {
 			imgUrl, _ = s.Attr("src")
 		}
+
 		tp = s.AttrOr("data-type", "jpg")
 		if file, err = uploadImage(imgUrl, tp); err == nil {
+			if i == 0 {
+				firstImage = file
+			}
 			imgUrl = fileUrl(file)
 		}
+
 		s.SetAttr("src", imgUrl)
 		s.RemoveAttr("data-src")
 		s.RemoveAttr("data-s")
@@ -83,6 +83,18 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 	if html, err = contentElement.Html(); err != nil {
 		return
 	}
+
+	if cover, ok = meta["msg_cdn_url"]; !ok {
+		if file, err = uploadImage(cover, "jpg"); err != nil {
+			file = firstImage
+		}
+	} else {
+		file = firstImage
+	}
+
+	meta["msg_cdn_url"] = fileUrl(file)
+	meta["cover"] = strconv.Itoa(file.ID)
+
 	meta["msg_content"] = strings.Trim(html, " \n\r\t")
 	meta["msg_text"] = strings.Trim(contentElement.Text(), " \n\r\t")
 	return
