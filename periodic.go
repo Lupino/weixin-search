@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Lupino/go-periodic"
+	"log"
 	"strconv"
 )
 
@@ -29,21 +29,21 @@ func crawlLinkHandle(job periodic.Job) {
 	)
 
 	if meta, err = doCrawl(job.Name); err != nil {
-		fmt.Printf("doCrawl() failed (%s)\n", err)
+		log.Printf("doCrawl() failed (%s)\n", err)
 		return
 	}
 	if art, err = createArticle(meta); err != nil {
-		fmt.Printf("createArticle() failed (%s)\n", err)
+		log.Printf("createArticle() failed (%s)\n", err)
 		retryJob(job)
 		return
 	}
 	if err = createTimeline(meta["biz"], art); err != nil {
-		fmt.Printf("createTimeline() failed (%s)\n", err)
+		log.Printf("createTimeline() failed (%s)\n", err)
 		retryJob(job)
 		return
 	}
 	if err = updateCover(art, meta["cover"]); err != nil {
-		fmt.Printf("updateCover() failed (%s)\n", err)
+		log.Printf("updateCover() failed (%s)\n", err)
 	}
 	meta["id"] = strconv.Itoa(art.ID)
 	doc = metaDoc(meta)
