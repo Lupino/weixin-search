@@ -16,7 +16,6 @@ import (
 var (
 	path          string
 	host          string
-	domain        = "mp.weixin.qq.com"
 	name          string
 	periodicHost  string
 	docIndex      bleve.Index
