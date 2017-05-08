@@ -1,7 +1,8 @@
 package main
 
 import (
-	"unicode/utf8"
+	"encoding/json"
+	// "github.com/blevesearch/bleve/document"
 )
 
 // Document defined common document
@@ -15,9 +16,45 @@ type Document struct {
 }
 
 type hitResult struct {
-	ID        string              `json:"uri"`
-	Fragments map[string][]string `json:"fragments"`
-	Score     float64             `json:"score"`
+	ID      string            `json:"uri"`
+	Summary string            `json:"summary"`
+	Meta    map[string]string `json:"meta"`
+	Score   float64           `json:"score"`
+}
+
+func getDocument(id string) (*Document, error) {
+	var doc, err = docIndex.Document(id)
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		return nil, nil
+	}
+
+	var realDoc = new(Document)
+	realDoc.ID = doc.ID
+	for _, field := range doc.Fields {
+		switch field.Name() {
+		// case "title":
+		//     realDoc.Title = string(field.Value())
+		//     break
+		// case "content":
+		//     realDoc.Content = string(field.Value())
+		//     break
+		case "summary":
+			realDoc.Summary = string(field.Value())
+			break
+		case "meta":
+			var payload = field.Value()
+			json.Unmarshal(payload, &realDoc.Meta)
+			break
+			// case "created_at":
+			//     v, _ := field.(*document.NumericField).Number()
+			//     realDoc.CreatedAt = int64(v)
+			//     break
+		}
+	}
+	return realDoc, nil
 }
 
 func hasDocument(id string) bool {
@@ -29,35 +66,4 @@ func hasDocument(id string) bool {
 		return false
 	}
 	return true
-}
-
-func filterUtf8(old string) string {
-	n := old[:]
-	for !utf8.ValidString(n) {
-		if len(n) <= 0 {
-			break
-		}
-		n = n[:len(n)-1]
-	}
-	if len(n) < len(old) {
-		n = n + "…"
-	}
-
-	return n
-}
-
-func filterFragment(in []string) []string {
-	out := make([]string, len(in))
-	for i, f := range in {
-		out[i] = filterUtf8(f)
-	}
-	return out
-}
-
-func filterFragments(in map[string][]string) map[string][]string {
-	out := make(map[string][]string)
-	for k, v := range in {
-		out[k] = filterFragment(v)
-	}
-	return out
 }

@@ -140,10 +140,15 @@ func main() {
 
 		var hits = make([]hitResult, len(searchResult.Hits))
 		for i, hit := range searchResult.Hits {
+			doc, err := getDocument(hit.ID)
+			if err != nil {
+				continue
+			}
 			hits[i] = hitResult{
-				ID:        hit.ID,
-				Fragments: filterFragments(hit.Fragments),
-				Score:     hit.Score,
+				ID:      hit.ID,
+				Summary: doc.Summary,
+				Meta:    doc.Meta,
+				Score:   hit.Score,
 			}
 		}
 
