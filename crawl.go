@@ -28,7 +28,7 @@ func extractData(data string) string {
 func doCrawl(uri string) (meta map[string]string, err error) {
 	var (
 		doc        *goquery.Document
-		reMeta     = regexp.MustCompile("var (biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
+		reMeta     = regexp.MustCompile("var (idx|biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
 		text       string
 		match      []string
 		html       string
