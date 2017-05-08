@@ -13,7 +13,14 @@ func TestDoCrawl(t *testing.T) {
 	articleKey = "33c6615d7aaf88ff2ad1"
 	articleSecret = "4de6cb3779eedbde19f794697d519c122894357a73be5a481467be5769948656"
 	meta, err := doCrawl(uri)
-	fmt.Printf("meta=%s\n", meta)
+	for key := range meta {
+		val := meta[key]
+		length := len(val)
+		if length > 200 {
+			length = 200
+		}
+		fmt.Printf("%s=%s\n", key, val[:length])
+	}
 	fmt.Printf("err=%v\n", err)
 }
 

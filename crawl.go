@@ -37,6 +37,12 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 	}
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		text = s.Text()
+		lines := strings.Split(text, "\n")
+		for _, line := range lines {
+			if reMeta.MatchString(line) {
+				match = reMeta.FindStringSubmatch(line)
+				meta[match[1]] = extractData(match[2])
+			}
 		}
 	})
 
