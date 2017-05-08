@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"net/http"
+	urlLib "net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +28,7 @@ func extractData(data string) string {
 func doCrawl(uri string) (meta map[string]string, err error) {
 	var (
 		doc    *goquery.Document
-		reMeta = regexp.MustCompile("var (biz|sn|mid|msg_title|msg_desc|msg_cdn_url) = ([^;]+);")
+		reMeta = regexp.MustCompile("var (biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
 		text   string
 		match  []string
 		html   string
@@ -49,6 +52,7 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 	if cover, ok := meta["msg_cdn_url"]; ok {
 		if file, err := uploadImage(cover, "jpg"); err == nil {
 			meta["msg_cdn_url"] = fileUrl(file)
+			meta["cover"] = strconv.Itoa(file.ID)
 		}
 	}
 
@@ -89,12 +93,25 @@ type Extra struct {
 }
 
 type File struct {
+	ID    int    `json:"id"`
 	Key   string `json:"key"`
 	Extra Extra  `json:"extra"`
 }
 
 func fileUrl(file File) string {
 	return articleHost + "/" + file.Key + "." + file.Extra.Ext + "?key=" + articleKey
+}
+
+func metaUrl(meta map[string]string) string {
+	return fmt.Sprintf("https://mp.weixin.qq.com/s?__biz=%s&mid=%s&idx=%s&sn=%s", meta["biz"], meta["mid"], meta["idx"], meta["sn"])
+}
+
+func metaCreatedAt(meta map[string]string) string {
+	if ct, ok := meta["svr_time"]; ok {
+		words := strings.Split(ct, "*")
+		return strings.Trim(words[0], "\" ")
+	}
+	return "0"
 }
 
 func uploadImage(imgUrl, tp string) (file File, err error) {
@@ -134,5 +151,118 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 	if err = decoder.Decode(&file); err != nil {
 		return
 	}
+	defer rsp.Body.Close()
+	return
+}
+
+type Article struct {
+	ID int `json:"id"`
+}
+
+type ArticleResult struct {
+	Article Article `json:"article"`
+}
+
+func createArticle(meta map[string]string) (art Article, err error) {
+	var (
+		form = urlLib.Values{}
+		url  = articleHost + "/api/articles/"
+		req  *http.Request
+		rsp  *http.Response
+	)
+	form.Add("title", meta["msg_title"])
+	form.Add("summary", meta["msg_desc"])
+	form.Add("content", meta["msg_content"])
+	form.Add("from_url", metaUrl(meta))
+	form.Add("created_at", metaCreatedAt(meta))
+	if req, err = http.NewRequest("POST", url, strings.NewReader(form.Encode())); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	filledRequestHeader(req, form)
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		return
+	}
+	if rsp.StatusCode != 200 {
+		err = errors.New("Create article failed.")
+		return
+	}
+	decoder := json.NewDecoder(rsp.Body)
+	var ret ArticleResult
+	if err = decoder.Decode(&ret); err != nil {
+		return
+	}
+	defer rsp.Body.Close()
+	art = ret.Article
+	return
+}
+
+func createTimeline(timeline string, art Article) (err error) {
+	var (
+		form = urlLib.Values{}
+		url  = articleHost + "/api/timeline/" + timeline + "/"
+		req  *http.Request
+		rsp  *http.Response
+	)
+	form.Add("art_id", strconv.Itoa(art.ID))
+	if req, err = http.NewRequest("POST", url, strings.NewReader(form.Encode())); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	filledRequestHeader(req, form)
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		return
+	}
+	if rsp.StatusCode != 200 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Create timeline failed (%s)", raw)
+		return
+	}
+	defer rsp.Body.Close()
+	return
+}
+
+func removeTimeline(timeline string, art Article) (err error) {
+	var (
+		url = articleHost + "/api/timeline/" + timeline + "/" + strconv.Itoa(art.ID) + "/"
+		req *http.Request
+		rsp *http.Response
+	)
+	if req, err = http.NewRequest("DELETE", url, nil); err != nil {
+		return
+	}
+	filledRequestHeader(req, urlLib.Values{})
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		return
+	}
+	if rsp.StatusCode != 200 {
+		err = errors.New("Create timeline failed.")
+		return
+	}
+	defer rsp.Body.Close()
+	return
+}
+
+func updateCover(art Article, fileId string) (err error) {
+	var (
+		form = urlLib.Values{}
+		url  = articleHost + "/api/articles/" + strconv.Itoa(art.ID) + "/cover"
+		req  *http.Request
+		rsp  *http.Response
+	)
+	form.Add("file_id", fileId)
+	if req, err = http.NewRequest("POST", url, strings.NewReader(form.Encode())); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	filledRequestHeader(req, form)
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		return
+	}
+	if rsp.StatusCode != 200 {
+		err = errors.New("Create timeline failed.")
+		return
+	}
+	defer rsp.Body.Close()
 	return
 }
