@@ -84,6 +84,7 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 		return
 	}
 	meta["msg_content"] = strings.Trim(html, " \n\r\t")
+	meta["msg_text"] = strings.Trim(contentElement.Text(), " \n\r\t")
 	return
 }
 
@@ -265,4 +266,19 @@ func updateCover(art Article, fileId string) (err error) {
 	}
 	defer rsp.Body.Close()
 	return
+}
+
+func metaDoc(meta map[string]string) (doc Document) {
+	ct, _ := strconv.ParseInt(metaCreatedAt(meta), 10, 0)
+	return Document{
+		ID:      metaUrl(meta),
+		Title:   meta["msg_title"],
+		Summary: meta["msg_desc"],
+		Content: meta["msg_text"],
+		Meta: map[string]string{
+			"id":    meta["id"],
+			"cover": meta["msg_cdn_url"],
+		},
+		CreatedAt: ct,
+	}
 }
