@@ -74,24 +74,6 @@ func main() {
 		sendJSONResponse(w, http.StatusOK, "result", "OK")
 	}).Methods("POST")
 
-	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
-		var (
-			qs  = req.URL.Query()
-			uri = qs.Get("uri")
-			err error
-			doc *Document
-		)
-		if doc, err = getDocument(uri); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		if doc == nil {
-			sendJSONResponse(w, http.StatusNotFound, "err", "doc["+uri+"] not exists.")
-			return
-		}
-		sendJSONResponse(w, http.StatusOK, "", doc)
-	}).Methods("GET")
-
 	router.HandleFunc("/api/docs/count", func(w http.ResponseWriter, req *http.Request) {
 		var docCount, err = docIndex.DocCount()
 		if err != nil {

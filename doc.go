@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/blevesearch/bleve/document"
 	"unicode/utf8"
 )
 
@@ -30,38 +28,6 @@ func hasDocument(id string) bool {
 		return false
 	}
 	return true
-}
-
-func getDocument(id string) (*Document, error) {
-	var doc, err = docIndex.Document(id)
-	if err != nil {
-		return nil, err
-	}
-	if doc == nil {
-		return nil, nil
-	}
-
-	var realDoc = new(Document)
-	realDoc.ID = doc.ID
-	for _, field := range doc.Fields {
-		switch field.Name() {
-		case "title":
-			realDoc.Title = string(field.Value())
-			break
-		case "content":
-			realDoc.Content = string(field.Value())
-			break
-		case "tags":
-			var payload = field.Value()
-			json.Unmarshal(payload, &realDoc.Tags)
-			break
-		case "created_at":
-			v, _ := field.(*document.NumericField).Number()
-			realDoc.CreatedAt = int64(v)
-			break
-		}
-	}
-	return realDoc, nil
 }
 
 func filterUtf8(old string) string {
