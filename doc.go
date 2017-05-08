@@ -1,18 +1,17 @@
 package main
 
 import (
-	"encoding/json"
-	// "github.com/blevesearch/bleve/document"
+// "github.com/blevesearch/bleve/document"
 )
 
 // Document defined common document
 type Document struct {
-	ID        string            `json:"uri"`
-	Title     string            `json:"title,omitempty"`
-	Summary   string            `json:"summary,omitempty"`
-	Content   string            `json:"content,omitempty"`
-	Meta      map[string]string `json:"tags,omitempty"`
-	CreatedAt int64             `json:"created_at,omitempty"`
+	ID        string `json:"uri"`
+	Title     string `json:"title,omitempty"`
+	Summary   string `json:"summary,omitempty"`
+	Content   string `json:"content,omitempty"`
+	Meta      string `json:"meta,omitempty"`
+	CreatedAt int64  `json:"created_at,omitempty"`
 }
 
 type hitResult struct {
@@ -45,8 +44,7 @@ func getDocument(id string) (*Document, error) {
 			realDoc.Summary = string(field.Value())
 			break
 		case "meta":
-			var payload = field.Value()
-			json.Unmarshal(payload, &realDoc.Meta)
+			realDoc.Meta = string(field.Value())
 			break
 			// case "created_at":
 			//     v, _ := field.(*document.NumericField).Number()

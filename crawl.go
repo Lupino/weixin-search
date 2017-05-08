@@ -282,15 +282,16 @@ func updateCover(art Article, fileId string) (err error) {
 
 func metaDoc(meta map[string]string) (doc Document) {
 	ct, _ := strconv.ParseInt(metaCreatedAt(meta), 10, 0)
+	mt, _ := json.Marshal(map[string]string{
+		"id":    meta["id"],
+		"cover": meta["msg_cdn_url"],
+	})
 	return Document{
-		ID:      metaUrl(meta),
-		Title:   meta["msg_title"],
-		Summary: meta["msg_desc"],
-		Content: meta["msg_text"],
-		Meta: map[string]string{
-			"id":    meta["id"],
-			"cover": meta["msg_cdn_url"],
-		},
+		ID:        metaUrl(meta),
+		Title:     meta["msg_title"],
+		Summary:   meta["msg_desc"],
+		Content:   meta["msg_text"],
+		Meta:      string(mt),
 		CreatedAt: ct,
 	}
 }

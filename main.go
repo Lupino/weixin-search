@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/blevesearch/bleve"
@@ -147,9 +148,10 @@ func main() {
 			hits[i] = hitResult{
 				ID:      hit.ID,
 				Summary: doc.Summary,
-				Meta:    doc.Meta,
+				Meta:    nil,
 				Score:   hit.Score,
 			}
+			json.Unmarshal([]byte(doc.Meta), &hits[i].Meta)
 		}
 
 		total = searchResult.Total
