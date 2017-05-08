@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/blevesearch/bleve/document"
-	"github.com/mholt/binding"
-	"net/http"
 	"unicode/utf8"
 )
 
@@ -15,17 +13,6 @@ type Document struct {
 	Content   string   `json:"content,omitempty"`
 	Tags      []string `json:"tags,omitempty"`
 	CreatedAt int64    `json:"created_at,omitempty"`
-}
-
-// FieldMap defined the interface for binding form
-func (doc *Document) FieldMap(_ *http.Request) binding.FieldMap {
-	return binding.FieldMap{
-		&doc.ID:        binding.Field{Form: "uri", Required: true},
-		&doc.Title:     binding.Field{Form: "title", Required: true},
-		&doc.Content:   binding.Field{Form: "content", Required: false},
-		&doc.Tags:      binding.Field{Form: "tags", Required: false},
-		&doc.CreatedAt: binding.Field{Form: "created_at", Required: false},
-	}
 }
 
 type hitResult struct {

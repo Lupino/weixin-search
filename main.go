@@ -3,34 +3,26 @@ package main
 import (
 	"flag"
 	"github.com/Lupino/go-periodic"
-	"github.com/PuerkitoBio/purell"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
-	"github.com/mholt/binding"
 	"github.com/unrolled/render"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 )
 
 var (
-	path         string
-	host         string
-	domain       string
-	periodicAddr string
-	extractHost  string
-	docIndex     bleve.Index
-	pclient      = periodic.NewClient()
-	pworker      = periodic.NewWorker(2)
-	r            = render.New()
-	flags        = purell.FlagsUsuallySafeGreedy |
-		purell.FlagRemoveFragment |
-		purell.FlagRemoveDuplicateSlashes |
-		purell.FlagSortQuery |
-		purell.FlagRemoveEmptyPortSeparator
+	path          string
+	host          string
+	domain        = "mp.weixin.qq.com"
+	name          string
+	periodicHost  string
+	docIndex      bleve.Index
+	pclient       = periodic.NewClient()
+	pworker       = periodic.NewWorker(2)
+	r             = render.New()
 )
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -44,30 +36,15 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 func init() {
 	flag.StringVar(&host, "host", "localhost:3030", "The search server host.")
 	flag.StringVar(&path, "db", "simple-search.db", "The database path.")
-	flag.StringVar(&periodicAddr, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
-	flag.StringVar(&domain, "domain", "example.com", "The target domain name.")
-	flag.StringVar(&extractHost, "extract", "localhost:3031", "The content extract host.")
+	flag.StringVar(&periodicHost, "periodic", "unix:///tmp/periodic.sock", "The periodic server address")
+	flag.StringVar(&name, "name", "weixin-search", "The search server name.")
 	flag.Parse()
 }
 
-func isValidHost(link string) (string, bool) {
-	var (
-		err error
-		u   *url.URL
-	)
-
-	if u, err = url.Parse(link); err != nil {
-		return "", false
-	}
-	normalized := purell.NormalizeURL(u, flags)
-	return normalized, u.Host == domain
-}
-
 func main() {
-	pclient.Connect(periodicAddr)
-	pworker.Connect(periodicAddr)
-	pworker.AddFunc(*funcName, indexDocHandle)
-	pworker.AddFunc("hot-"+*funcName, indexHotHandle)
+	pclient.Connect(periodicHost)
+	pworker.Connect(periodicHost)
+	pworker.AddFunc(name+funcName, crawlLinkHandle)
 
 	var router = mux.NewRouter()
 	docIndex, _ = openIndex(path)
@@ -75,40 +52,21 @@ func main() {
 	go pworker.Work()
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
-		doc := new(Document)
-		errs := binding.Bind(req, doc)
-		if errs.Handle(w) {
+		var (
+			err error
+		)
+		req.ParseForm()
+		uri := req.Form.Get("uri")
+		if hasDocument(uri) {
+			sendJSONResponse(w, http.StatusOK, "result", "OK")
 			return
 		}
-		if err := submitDoc(*doc); err != nil {
+		if err = submitCrawlLink(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		sendJSONResponse(w, http.StatusOK, "result", "OK")
 	}).Methods("POST")
-
-	// auto index on simple crawl
-	router.HandleFunc("/api/docs/hot/", func(w http.ResponseWriter, req *http.Request) {
-		var (
-			qs  = req.URL.Query()
-			uri = qs.Get("uri")
-			ok  bool
-			err error
-		)
-		if uri, ok = isValidHost(uri); !ok {
-			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid host.")
-			return
-		}
-		if hasDocument(uri) {
-			sendJSONResponse(w, http.StatusOK, "result", "OK")
-			return
-		}
-		if err = submitHotLink(uri); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		sendJSONResponse(w, http.StatusOK, "result", "OK")
-	}).Methods("GET")
 
 	router.HandleFunc("/api/docs/", func(w http.ResponseWriter, req *http.Request) {
 		var (
