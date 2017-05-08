@@ -84,7 +84,7 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 		return
 	}
 
-	if cover, ok = meta["msg_cdn_url"]; !ok {
+	if cover, ok = meta["msg_cdn_url"]; ok {
 		if file, err = uploadImage(cover, "jpg"); err != nil {
 			file = firstImage
 		}
