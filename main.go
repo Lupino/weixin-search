@@ -130,10 +130,6 @@ func main() {
 		}
 
 		searchRequest := bleve.NewSearchRequestOptions(_query, size, from, false)
-		searchRequest.Highlight = bleve.NewHighlightWithStyle("html")
-		searchRequest.Highlight.AddField("content")
-		searchRequest.Highlight.AddField("title")
-		searchRequest.Highlight.AddField("tags")
 
 		for _, word := range strings.Split(qs.Get("order"), " ") {
 			word = strings.Trim(word, " \"'")
