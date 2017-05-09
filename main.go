@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -103,6 +104,7 @@ func main() {
 			from  int
 			size  int
 			total uint64
+			order []string
 			q     = qs.Get("q")
 		)
 		if from, err = strconv.Atoi(qs.Get("from")); err != nil {
@@ -132,6 +134,18 @@ func main() {
 		searchRequest.Highlight.AddField("content")
 		searchRequest.Highlight.AddField("title")
 		searchRequest.Highlight.AddField("tags")
+
+		for _, word := range strings.Split(qs.Get("order"), " ") {
+			word = strings.Trim(word, " \"'")
+			if len(word) > 0 {
+				order = append(order, word)
+			}
+		}
+
+		if len(order) > 0 {
+			searchRequest.SortBy(order)
+		}
+
 		searchResult, err := docIndex.Search(searchRequest)
 		if err != nil {
 			log.Printf("bleve.Index.Search() failed(%s)", err)
