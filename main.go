@@ -11,6 +11,7 @@ import (
 	"github.com/unrolled/render"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -27,6 +28,7 @@ var (
 	articleKey    string
 	articleSecret string
 	articleHost   string
+	reUrl         = regexp.MustCompile("^https?://mp.weixin.qq.com/s")
 )
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -64,6 +66,10 @@ func main() {
 		)
 		req.ParseForm()
 		uri := req.Form.Get("uri")
+		if !reUrl.MatchString(uri) {
+			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid weixin url.")
+			return
+		}
 		if hasDocument(uri) {
 			sendJSONResponse(w, http.StatusOK, "result", "OK")
 			return
@@ -90,6 +96,10 @@ func main() {
 			uri = qs.Get("uri")
 			err error
 		)
+		if !reUrl.MatchString(uri) {
+			sendJSONResponse(w, http.StatusBadRequest, "err", "Invalid weixin url.")
+			return
+		}
 		if err = docIndex.Delete(uri); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
