@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,14 @@ import (
 	"strconv"
 	"strings"
 )
+
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
+}
 
 func extractData(data string) string {
 	var words = strings.Split(data, "||")
@@ -153,7 +162,7 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 	if err = filledRequestHeaderWithRaw(req); err != nil {
 		return
 	}
-	if rsp, err = http.DefaultClient.Do(req); err != nil {
+	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
 	if rsp.StatusCode != 200 {
@@ -193,7 +202,7 @@ func createArticle(meta map[string]string) (art Article, err error) {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	filledRequestHeader(req, form)
-	if rsp, err = http.DefaultClient.Do(req); err != nil {
+	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
 	if rsp.StatusCode != 200 {
@@ -223,7 +232,7 @@ func createTimeline(timeline string, art Article) (err error) {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	filledRequestHeader(req, form)
-	if rsp, err = http.DefaultClient.Do(req); err != nil {
+	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
 	if rsp.StatusCode != 200 {
@@ -245,7 +254,7 @@ func removeTimeline(timeline string, art Article) (err error) {
 		return
 	}
 	filledRequestHeader(req, urlLib.Values{})
-	if rsp, err = http.DefaultClient.Do(req); err != nil {
+	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
 	if rsp.StatusCode != 200 {
@@ -269,7 +278,7 @@ func updateCover(art Article, fileId string) (err error) {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	filledRequestHeader(req, form)
-	if rsp, err = http.DefaultClient.Do(req); err != nil {
+	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
 	if rsp.StatusCode != 200 {
