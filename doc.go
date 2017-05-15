@@ -1,7 +1,7 @@
 package main
 
 import (
-// "github.com/blevesearch/bleve/document"
+	"github.com/blevesearch/bleve/document"
 )
 
 // Document defined common document
@@ -15,10 +15,12 @@ type Document struct {
 }
 
 type hitResult struct {
-	ID      string            `json:"uri"`
-	Summary string            `json:"summary"`
-	Meta    map[string]string `json:"meta"`
-	Score   float64           `json:"score"`
+	ID        string            `json:"uri"`
+	Title     string            `json:"title"`
+	Summary   string            `json:"summary"`
+	Meta      map[string]string `json:"meta"`
+	Score     float64           `json:"score"`
+	CreatedAt int64             `json:"created_at"`
 }
 
 func getDocument(id string) (*Document, error) {
@@ -34,9 +36,9 @@ func getDocument(id string) (*Document, error) {
 	realDoc.ID = doc.ID
 	for _, field := range doc.Fields {
 		switch field.Name() {
-		// case "title":
-		//     realDoc.Title = string(field.Value())
-		//     break
+		case "title":
+			realDoc.Title = string(field.Value())
+			break
 		// case "content":
 		//     realDoc.Content = string(field.Value())
 		//     break
@@ -46,10 +48,10 @@ func getDocument(id string) (*Document, error) {
 		case "meta":
 			realDoc.Meta = string(field.Value())
 			break
-			// case "created_at":
-			//     v, _ := field.(*document.NumericField).Number()
-			//     realDoc.CreatedAt = int64(v)
-			//     break
+		case "created_at":
+			v, _ := field.(*document.NumericField).Number()
+			realDoc.CreatedAt = int64(v)
+			break
 		}
 	}
 	return realDoc, nil

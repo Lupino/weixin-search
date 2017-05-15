@@ -166,10 +166,12 @@ func main() {
 				continue
 			}
 			hits[i] = hitResult{
-				ID:      hit.ID,
-				Summary: doc.Summary,
-				Meta:    nil,
-				Score:   hit.Score,
+				ID:        hit.ID,
+				Title:     doc.Title,
+				Summary:   doc.Summary,
+				Meta:      nil,
+				Score:     hit.Score,
+				CreatedAt: doc.CreatedAt,
 			}
 			json.Unmarshal([]byte(doc.Meta), &hits[i].Meta)
 		}
