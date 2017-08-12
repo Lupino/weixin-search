@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
@@ -14,9 +14,9 @@ import (
 	"time"
 )
 
-// hmacMD5
-func hmacMD5(slot string, params map[string]string) string {
-	mac := hmac.New(md5.New, []byte(slot))
+// hmacSHA256
+func hmacSHA256(slot string, params map[string]string) string {
+	mac := hmac.New(sha256.New, []byte(slot))
 	var keys []string
 	for key := range params {
 		keys = append(keys, key)
@@ -42,7 +42,7 @@ func filledRequestHeader(req *http.Request, params url.Values) {
 	for key := range params {
 		signParams[key] = params.Get(key)
 	}
-	sign = hmacMD5(articleSecret, signParams)
+	sign = hmacSHA256(articleSecret, signParams)
 
 	req.Header.Add("X-REQUEST-KEY", articleKey)
 	req.Header.Add("X-REQUEST-TIME", timestamp)
@@ -72,7 +72,7 @@ func filledRequestHeaderWithRaw(req *http.Request) error {
 	}
 
 	signParams["raw"] = string(raw)
-	sign = hmacMD5(articleSecret, signParams)
+	sign = hmacSHA256(articleSecret, signParams)
 
 	req.Header.Add("X-REQUEST-KEY", articleKey)
 	req.Header.Add("X-REQUEST-TIME", timestamp)
