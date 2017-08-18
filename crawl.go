@@ -121,7 +121,7 @@ type File struct {
 }
 
 func fileUrl(file File) string {
-	return articleHost + "/" + file.Key + "." + file.Extra.Ext + "?key=" + articleKey
+	return articleHost + "/api/file/" + file.Key + "." + file.Extra.Ext + "?key=" + articleKey
 }
 
 func metaUrl(meta map[string]string) string {
