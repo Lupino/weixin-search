@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"github.com/Lupino/tokenizer"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/custom"
@@ -9,8 +8,6 @@ import (
 	"github.com/blevesearch/bleve/index/store/goleveldb"
 	"github.com/blevesearch/bleve/mapping"
 )
-
-var tokenizerHost = flag.String("tokenizer", "localhost:3000", "tokenizer server host.")
 
 func createMapping() mapping.IndexMapping {
 	_mapping, err := newIndexMapping()
@@ -36,15 +33,6 @@ func newIndexMapping() (mapping.IndexMapping, error) {
 	)
 	_mapping := bleve.NewIndexMapping()
 
-	if err = _mapping.AddCustomTokenizer("sego",
-		map[string]interface{}{
-			"host": *tokenizerHost,
-			"type": tokenizer.Name,
-		},
-	); err != nil {
-		return nil, err
-	}
-
 	// create a custom analyzer
 	if err = _mapping.AddCustomAnalyzer("sego",
 		map[string]interface{}{
@@ -64,5 +52,6 @@ func newIndexMapping() (mapping.IndexMapping, error) {
 	}
 
 	_mapping.DefaultAnalyzer = tokenizer.Name
+
 	return _mapping, nil
 }
