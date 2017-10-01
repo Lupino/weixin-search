@@ -36,7 +36,7 @@ func filledRequestHeader(req *http.Request, params url.Values) {
 		timestamp  = strconv.FormatInt(time.Now().Unix(), 10)
 		sign       string
 	)
-	signParams["sign_path"] = req.URL.Path
+	signParams["pathname"] = req.URL.Path
 	signParams["key"] = articleKey
 	signParams["timestamp"] = timestamp
 	for key := range params {
@@ -59,7 +59,7 @@ func filledRequestHeaderWithRaw(req *http.Request) error {
 		raw        []byte
 	)
 
-	signParams["sign_path"] = req.URL.Path
+	signParams["pathname"] = req.URL.Path
 	signParams["key"] = articleKey
 	signParams["timestamp"] = timestamp
 
