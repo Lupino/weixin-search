@@ -30,26 +30,31 @@ func hmacSHA256(slot string, params map[string]string) string {
 	return strings.ToUpper(hex.EncodeToString(sum))
 }
 
-func filledRequestHeader(req *http.Request, params url.Values) {
+func hashData(raw []byte) string {
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:])
+}
+
+func filledRequestHeader(srvKey string, srvSecret string, req *http.Request, params url.Values) {
 	var (
 		signParams = make(map[string]string)
 		timestamp  = strconv.FormatInt(time.Now().Unix(), 10)
 		sign       string
 	)
 	signParams["pathname"] = req.URL.Path
-	signParams["key"] = articleKey
+	signParams["key"] = srvKey
 	signParams["timestamp"] = timestamp
 	for key := range params {
 		signParams[key] = params.Get(key)
 	}
-	sign = hmacSHA256(articleSecret, signParams)
+	sign = hmacSHA256(srvSecret, signParams)
 
-	req.Header.Add("X-REQUEST-KEY", articleKey)
+	req.Header.Add("X-REQUEST-KEY", srvSecret)
 	req.Header.Add("X-REQUEST-TIME", timestamp)
 	req.Header.Add("X-REQUEST-SIGNATURE", sign)
 }
 
-func filledRequestHeaderWithRaw(req *http.Request) error {
+func filledRequestHeaderWithRaw(srvKey string, srvSecret string, req *http.Request) error {
 	var (
 		signParams = make(map[string]string)
 		timestamp  = strconv.FormatInt(time.Now().Unix(), 10)
@@ -60,7 +65,7 @@ func filledRequestHeaderWithRaw(req *http.Request) error {
 	)
 
 	signParams["pathname"] = req.URL.Path
-	signParams["key"] = articleKey
+	signParams["key"] = srvKey
 	signParams["timestamp"] = timestamp
 
 	if reader, err = req.GetBody(); err != nil {
@@ -72,9 +77,9 @@ func filledRequestHeaderWithRaw(req *http.Request) error {
 	}
 
 	signParams["raw"] = string(raw)
-	sign = hmacSHA256(articleSecret, signParams)
+	sign = hmacSHA256(srvSecret, signParams)
 
-	req.Header.Add("X-REQUEST-KEY", articleKey)
+	req.Header.Add("X-REQUEST-KEY", srvKey)
 	req.Header.Add("X-REQUEST-TIME", timestamp)
 	req.Header.Add("X-REQUEST-SIGNATURE", sign)
 	return nil

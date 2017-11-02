@@ -30,6 +30,9 @@ var (
 	articleKey    string
 	articleSecret string
 	articleHost   string
+	sharefsKey    string
+	sharefsSecret string
+	sharefsHost   string
 	reUrl         = regexp.MustCompile("^https?://mp.weixin.qq.com/s")
 )
 
@@ -49,6 +52,9 @@ func init() {
 	flag.StringVar(&articleKey, "article-key", "", "The article service key.")
 	flag.StringVar(&articleSecret, "article-secret", "", "The article service secret.")
 	flag.StringVar(&articleHost, "article-host", "https://gw.huabot.com", "The article service host.")
+	flag.StringVar(&sharefsKey, "sharefs-key", "", "The sharefs service key.")
+	flag.StringVar(&sharefsSecret, "sharefs-secret", "", "The sharefs service secret.")
+	flag.StringVar(&sharefsHost, "sharefs-host", "https://gw.huabot.com", "The sharefs service host.")
 	flag.StringVar(&segoAddr, "tokenizer", "localhost:3000", "tokenizer server host.")
 
 	flag.Parse()

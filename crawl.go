@@ -109,19 +109,13 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 	return
 }
 
-// {"extra":{"height":296,"size":23903,"width":640,"name":"abc.jpg","type":"image/jpeg","ext":"jpg"},"bucket":"data/33c6615d7aaf88ff2ad1","key":"261645BACE6E14F328DEEE46B6057DECE95482F7","created_at":1494222465,"id":2}
-type Extra struct {
-	Ext string `json:"ext"`
-}
-
 type File struct {
-	ID    int    `json:"id"`
-	Key   string `json:"key"`
-	Extra Extra  `json:"extra"`
+	ID  int    `json:"id"`
+	Key string `json:"key"`
 }
 
 func fileUrl(file File) string {
-	return articleHost + "/api/file/" + file.Key + "." + file.Extra.Ext + "?key=" + articleKey
+	return sharefsHost + "/" + sharefsKey + "/file/" + file.Key
 }
 
 func metaUrl(meta map[string]string) string {
@@ -136,13 +130,40 @@ func metaCreatedAt(meta map[string]string) string {
 	return "0"
 }
 
+func saveFile(fileKey string) (file File, err error) {
+	var (
+		form = urlLib.Values{}
+		url  = articleHost + "/api/file/" + fileKey
+		req  *http.Request
+		rsp  *http.Response
+	)
+	form.Add("bucket", "upload")
+	if req, err = http.NewRequest("POST", url, strings.NewReader(form.Encode())); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	filledRequestHeader(articleKey, articleSecret, req, form)
+	if rsp, err = httpClient.Do(req); err != nil {
+		return
+	}
+	if rsp.StatusCode != 200 {
+		err = errors.New("Create article failed.")
+		return
+	}
+	defer rsp.Body.Close()
+	decoder := json.NewDecoder(rsp.Body)
+	if err = decoder.Decode(&file); err != nil {
+		return
+	}
+	return
+}
+
 func uploadImage(imgUrl, tp string) (file File, err error) {
 	var (
 		req    *http.Request
 		rsp    *http.Response
 		imgRsp *http.Response
 		raw    []byte
-		url    = articleHost + "/api/upload/?fileName=abc." + tp
 	)
 
 	if imgRsp, err = http.Get(imgUrl); err != nil {
@@ -156,10 +177,14 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 		return
 	}
 	defer imgRsp.Body.Close()
+
+	fileKey := hashData(raw)
+	url := sharefsHost + "/file/" + fileKey + "." + tp
+
 	if req, err = http.NewRequest("PUT", url, bytes.NewReader(raw)); err != nil {
 		return
 	}
-	if err = filledRequestHeaderWithRaw(req); err != nil {
+	if err = filledRequestHeaderWithRaw(sharefsKey, sharefsSecret, req); err != nil {
 		return
 	}
 	if rsp, err = httpClient.Do(req); err != nil {
@@ -169,12 +194,8 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 		err = errors.New("Upload image failed.")
 		return
 	}
-	decoder := json.NewDecoder(rsp.Body)
-	if err = decoder.Decode(&file); err != nil {
-		return
-	}
 	defer rsp.Body.Close()
-	return
+	return saveFile(fileKey)
 }
 
 type Article struct {
@@ -201,7 +222,7 @@ func createArticle(meta map[string]string) (art Article, err error) {
 		return
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	filledRequestHeader(req, form)
+	filledRequestHeader(articleKey, articleSecret, req, form)
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
@@ -231,7 +252,7 @@ func createTimeline(timeline string, art Article) (err error) {
 		return
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	filledRequestHeader(req, form)
+	filledRequestHeader(articleKey, articleSecret, req, form)
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
@@ -253,7 +274,7 @@ func removeTimeline(timeline string, art Article) (err error) {
 	if req, err = http.NewRequest("DELETE", url, nil); err != nil {
 		return
 	}
-	filledRequestHeader(req, urlLib.Values{})
+	filledRequestHeader(articleKey, articleSecret, req, urlLib.Values{})
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
@@ -277,7 +298,7 @@ func updateCover(art Article, fileId string) (err error) {
 		return
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	filledRequestHeader(req, form)
+	filledRequestHeader(articleKey, articleSecret, req, form)
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
