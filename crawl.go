@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
@@ -146,11 +145,12 @@ func saveFile(fileKey string) (file File, err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
-		err = errors.New("Create article failed.")
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Save file failed (%s)", raw)
 		return
 	}
-	defer rsp.Body.Close()
 	decoder := json.NewDecoder(rsp.Body)
 	if err = decoder.Decode(&file); err != nil {
 		return
@@ -169,14 +169,15 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 	if imgRsp, err = http.Get(imgUrl); err != nil {
 		return
 	}
-	if imgRsp.StatusCode != 200 {
-		err = errors.New("Request image failed.")
+	defer imgRsp.Body.Close()
+	if imgRsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(imgRsp.Body)
+		err = fmt.Errorf("Request image failed (%s)", raw)
 		return
 	}
 	if raw, err = ioutil.ReadAll(imgRsp.Body); err != nil {
 		return
 	}
-	defer imgRsp.Body.Close()
 
 	fileKey := hashData(raw)
 	url := sharefsHost + "/file/" + fileKey + "." + tp
@@ -190,11 +191,12 @@ func uploadImage(imgUrl, tp string) (file File, err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
-		err = errors.New("Upload image failed.")
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Upload image failed (%s)", raw)
 		return
 	}
-	defer rsp.Body.Close()
 	return saveFile(fileKey)
 }
 
@@ -226,8 +228,10 @@ func createArticle(meta map[string]string) (art Article, err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
-		err = errors.New("Create article failed.")
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Create article failed (%s)", raw)
 		return
 	}
 	decoder := json.NewDecoder(rsp.Body)
@@ -235,7 +239,6 @@ func createArticle(meta map[string]string) (art Article, err error) {
 	if err = decoder.Decode(&ret); err != nil {
 		return
 	}
-	defer rsp.Body.Close()
 	art = ret.Article
 	return
 }
@@ -256,12 +259,12 @@ func createTimeline(timeline string, art Article) (err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
 		raw, _ := ioutil.ReadAll(rsp.Body)
 		err = fmt.Errorf("Create timeline failed (%s)", raw)
 		return
 	}
-	defer rsp.Body.Close()
 	return
 }
 
@@ -278,11 +281,12 @@ func removeTimeline(timeline string, art Article) (err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
-		err = errors.New("Create timeline failed.")
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Remove timeline failed (%s)", raw)
 		return
 	}
-	defer rsp.Body.Close()
 	return
 }
 
@@ -302,11 +306,12 @@ func updateCover(art Article, fileId string) (err error) {
 	if rsp, err = httpClient.Do(req); err != nil {
 		return
 	}
-	if rsp.StatusCode != 200 {
-		err = errors.New("Update cover failed.")
+	defer rsp.Body.Close()
+	if rsp.StatusCode > 300 {
+		raw, _ := ioutil.ReadAll(rsp.Body)
+		err = fmt.Errorf("Update cover failed (%s)", raw)
 		return
 	}
-	defer rsp.Body.Close()
 	return
 }
 
