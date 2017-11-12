@@ -49,7 +49,7 @@ func filledRequestHeader(srvKey string, srvSecret string, req *http.Request, par
 	}
 	sign = hmacSHA256(srvSecret, signParams)
 
-	req.Header.Add("X-REQUEST-KEY", srvSecret)
+	req.Header.Add("X-REQUEST-KEY", srvKey)
 	req.Header.Add("X-REQUEST-TIME", timestamp)
 	req.Header.Add("X-REQUEST-SIGNATURE", sign)
 }
