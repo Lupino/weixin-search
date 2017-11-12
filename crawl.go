@@ -55,15 +55,13 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 	contentElement.Find("img").Each(func(i int, s *goquery.Selection) {
 		var (
 			imgUrl string
-			tp     string
 		)
 
 		if imgUrl, ok = s.Attr("data-src"); !ok {
 			imgUrl, _ = s.Attr("src")
 		}
 
-		tp = s.AttrOr("data-type", "jpg")
-		if file, err = uploadImage(imgUrl, tp); err == nil {
+		if file, err = uploadImage(imgUrl, "jpg"); err == nil {
 			if i == 0 {
 				firstImage = file
 			}
@@ -103,7 +101,7 @@ type File struct {
 }
 
 func fileUrl(file File) string {
-	return sharefsHost + "/" + sharefsKey + "/file/" + file.Key
+	return sharefsHost + "/" + sharefsKey + "/file/" + file.Key + ".jpg"
 }
 
 func metaUrl(meta map[string]string) string {
