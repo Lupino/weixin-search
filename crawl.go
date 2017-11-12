@@ -22,21 +22,10 @@ var httpClient = &http.Client{
 	},
 }
 
-func extractData(data string) string {
-	var words = strings.Split(data, "||")
-	for _, word := range words {
-		word = strings.Trim(word, "\" ")
-		if len(word) > 0 {
-			return word
-		}
-	}
-	return data
-}
-
 func doCrawl(uri string) (meta map[string]string, err error) {
 	var (
 		doc        *goquery.Document
-		reMeta     = regexp.MustCompile("var (idx|biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ([^;]+);")
+		reMeta     = regexp.MustCompile("var (idx|biz|sn|mid|msg_title|msg_desc|msg_cdn_url|svr_time) = ['\"]([^\"']+)[\"']")
 		text       string
 		match      []string
 		html       string
@@ -56,7 +45,7 @@ func doCrawl(uri string) (meta map[string]string, err error) {
 		for _, line := range lines {
 			if reMeta.MatchString(line) {
 				match = reMeta.FindStringSubmatch(line)
-				meta[match[1]] = extractData(match[2])
+				meta[match[1]] = match[2]
 			}
 		}
 	})
