@@ -32,6 +32,11 @@ func crawlLinkHandle(job periodic.Job) {
 		log.Printf("doCrawl() failed (%s)\n", err)
 		return
 	}
+	if !validMeta(meta) {
+		// log.Printf("Invalid meta (%s)\n", meta)
+		retryJob(job)
+		return
+	}
 	if art, err = createArticle(meta); err != nil {
 		log.Printf("createArticle() failed (%s)\n", err)
 		retryJob(job)

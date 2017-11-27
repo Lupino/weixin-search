@@ -210,6 +210,17 @@ type ArticleResult struct {
 	Article Article `json:"article"`
 }
 
+func validMeta(meta map[string]string) bool {
+	var keys = []string{"msg_title", "msg_desc", "msg_content", "biz", "mid", "idx", "sn"}
+	for _, key := range keys {
+		if len(meta[key]) == 0 {
+            print(key)
+			return false
+		}
+	}
+	return true
+}
+
 func createArticle(meta map[string]string) (art Article, err error) {
 	var (
 		form = urlLib.Values{}
