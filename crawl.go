@@ -24,11 +24,15 @@ var httpClient = &http.Client{
 
 func extractData(data string) string {
 	var words = strings.Split(data, "||")
-	for _, word := range words {
-		word = strings.Trim(word, "\" ")
-		if len(word) > 0 {
-			return word
+	if len(words) > 0 {
+		for _, word := range words {
+			word = strings.Trim(word, "\" ")
+			if len(word) > 0 {
+				return word
+			}
 		}
+		return ""
+
 	}
 	return data
 }
